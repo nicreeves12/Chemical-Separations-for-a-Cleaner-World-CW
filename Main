@@ -9,8 +9,20 @@ def get_isotherm(adsorbent_name, adsorbate_name):
     subset = data[(data['Adsorbent'] == adsorbent_name) & (data['Adsorbate'] == adsorbate_name)]
     return subset['P_Pa'].values, subset['q_mol_kg'].values
 
-P_Romulus_N2, q_Romulus_N2 = get_isotherm('Romulus', 'N2')
-P_Romulus_O2, q_Romulus_O2 = get_isotherm('Romulus', 'O2')
-P_Remus_N2, q_Remus_N2 = get_isotherm('Remus', 'N2')
-P_Remus_O2, q_Remus_O2 = get_isotherm('Remus', 'O2')
+P_Rom_N2, q_Rom_N2 = get_isotherm('Romulus', 'N2')
+P_Rom_O2, q_Rom_O2 = get_isotherm('Romulus', 'O2')
+P_Rem_N2, q_Rem_N2 = get_isotherm('Remus', 'N2')
+P_Rem_O2, q_Rem_O2 = get_isotherm('Remus', 'O2')
+
+P_q_Rom_N2 = P_Rom_N2[1:] / q_Rom_N2[1:]
+P_q_Rom_O2 = P_Rom_O2[1:] / q_Rom_O2[1:]
+P_q_Rem_N2 = P_Rem_N2[1:] / q_Rem_N2[1:]
+P_q_Rem_O2 = P_Rem_O2[1:] / q_Rem_O2[1:]
+
+slope, intercept = np.polyfit(P_Rom_N2[1:], P_q_Rom_N2, 1)
+
+plt.figure(figsize = (8, 5))
+plt.scatter(P_Rom_N2[1:], P_q_Rom_N2, label = 'Experimental Data')
+plt.plot(P_Rom_N2[1:], slope * P_Rom_N2[1:] + intercept)
+plt.show()
 
