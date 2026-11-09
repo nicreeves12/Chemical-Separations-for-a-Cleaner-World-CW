@@ -38,9 +38,6 @@ plt.legend()
 plt.grid(True, linestyle = '--', alpha = 0.5)
 plt.savefig("chart.png")
 
-y_Rom_N2_pred = slope * P_Rom_N2[1:] + intercept
-ss_res = np.sum((P_q_Rom_N2 - y_Rom_N2_pred) **2)
-ss_tot = np.sum((P_q_Rom_N2 - np.mean(P_q_Rom_N2))**2)
-r2 = 1 - (ss_res / ss_tot)
+R2 = np.corrcoef(P_Rom_N2[1:], P_q_Rom_N2)[0, 1]**2
+print("R2 value = ",R2)
 
-print("R2 value = ",r2)
