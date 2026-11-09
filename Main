@@ -21,8 +21,26 @@ P_q_Rem_O2 = P_Rem_O2[1:] / q_Rem_O2[1:]
 
 slope, intercept = np.polyfit(P_Rom_N2[1:], P_q_Rom_N2, 1)
 
+qm = 1 / slope
+KL = slope / intercept
+
+print("Qm = ",qm)
+print("KL = ",KL)
+
 plt.figure(figsize = (8, 5))
 plt.scatter(P_Rom_N2[1:], P_q_Rom_N2, label = 'Experimental Data')
 plt.plot(P_Rom_N2[1:], slope * P_Rom_N2[1:] + intercept)
-plt.show()
 
+plt.xlabel('Pressure $P$ [Pa]')
+plt.ylabel('$P / q$ [Pa kg mol$^{-1}$]')
+plt.title('Langmuir Linearisation Plot - Romulus ${N_2}$')
+plt.legend()
+plt.grid(True, linestyle = '--', alpha = 0.5)
+plt.savefig("chart.png")
+
+y_Rom_N2_pred = slope * P_Rom_N2[1:] + intercept
+ss_res = np.sum((P_q_Rom_N2 - y_Rom_N2_pred) **2)
+ss_tot = np.sum((P_q_Rom_N2 - np.mean(P_q_Rom_N2))**2)
+r2 = 1 - (ss_res / ss_tot)
+
+print("R2 value = ",r2)
