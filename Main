@@ -9,35 +9,90 @@ def get_isotherm(adsorbent_name, adsorbate_name):
     subset = data[(data['Adsorbent'] == adsorbent_name) & (data['Adsorbate'] == adsorbate_name)]
     return subset['P_Pa'].values, subset['q_mol_kg'].values
 
-P_Rom_N2, q_Rom_N2 = get_isotherm('Romulus', 'N2')
-P_Rom_O2, q_Rom_O2 = get_isotherm('Romulus', 'O2')
-P_Rem_N2, q_Rem_N2 = get_isotherm('Remus', 'N2')
-P_Rem_O2, q_Rem_O2 = get_isotherm('Remus', 'O2')
+def langmuir_analysis(P, q):
 
-P_q_Rom_N2 = P_Rom_N2[1:] / q_Rom_N2[1:]
-P_q_Rom_O2 = P_Rom_O2[1:] / q_Rom_O2[1:]
-P_q_Rem_N2 = P_Rem_N2[1:] / q_Rem_N2[1:]
-P_q_Rem_O2 = P_Rem_O2[1:] / q_Rem_O2[1:]
+    mask = (P > 0) & (q > 0)
+    P = P[mask]
+    q = q[mask]
 
-slope, intercept = np.polyfit(P_Rom_N2[1:], P_q_Rom_N2, 1)
+    P_q = P / q
 
-qm = 1 / slope
-KL = slope / intercept
+    slope, intercept = np.polyfit(P, P_q, 1)
 
-print("Qm = ",qm)
-print("KL = ",KL)
+    qm = 1 / slope
+    KL = slope / intercept
 
-plt.figure(figsize = (8, 5))
-plt.scatter(P_Rom_N2[1:], P_q_Rom_N2, label = 'Experimental Data')
-plt.plot(P_Rom_N2[1:], slope * P_Rom_N2[1:] + intercept)
+    predicted = slope * P + intercept
+    SS_res = np.sum((P_q - predicted)**2)
+    SS_tot = np.sum((P_q - np.mean(P_q))**2)
+    R2 = 1 - (SS_res / SS_tot)
 
-plt.xlabel('Pressure $P$ [Pa]')
-plt.ylabel('$P / q$ [Pa kg mol$^{-1}$]')
-plt.title('Langmuir Linearisation Plot - Romulus ${N_2}$')
-plt.legend()
-plt.grid(True, linestyle = '--', alpha = 0.5)
-plt.savefig("chart.png")
+    return P, P_q, slope, intercept, qm, KL, R2
 
-R2 = np.corrcoef(P_Rom_N2[1:], P_q_Rom_N2)[0, 1]**2
-print("R2 value = ",R2)
+datasets = [('Romulus', 'N2'), ('Romulus', 'O2'), ('Remus', 'N2'),('Remus', 'O2')]
+
+fig, axes = plt.subplots(2, 2, figsize = (13,9))
+
+axes = axes.flatten()
+
+for ax, (adsorbent, adsorbate) in zip(axes, datasets):
+
+    P, q = get_isotherm(adsorbent, adsorbate)
+
+    P, P_q, slope, interecpt, qm, KL, R2 = langmuir_analysis(P, q)
+
+    P_fit = np.linspace(min(P), max(P), 100)
+    P_q_fit = slope * P_fit + interecpt
+
+    ax.scatter(P, P_q, label = 'Experimental Data')
+    ax.plot(P_fit, P_q_fit, label = 'Linear Regression')
+
+    ax.set_xlabel('Pressure, P [Pa]')
+    ax.set_ylabel('P/q [Pa kg mol$^{-1}$]')
+    ax.set_title(f'{adsorbent} - {adsorbate}')
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend()
+
+    results = (f'$q_m$ = {qm:.4f} mol/kg\n', f'$K_L$ = {KL:.4e} Pa$^{{-1}}$\n', f'$R^2$ = {R2:.5f}')
+
+    ax.text(0.05, 0.95, results, transform = ax.transAxes, verticalalignment = 'top', bbox = dict(boxstyle = round, facecolor = 'white', alpha = 0.85))
+
+fig.suptitle('Langmuir Isotherm Linearisation', fontsize = 16)
+plt.tight_layout()
+
+plt.savefig('Langmuir_Linearisation_All.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+
+# P_Rom_N2, q_Rom_N2 = get_isotherm('Romulus', 'N2')
+# P_Rom_O2, q_Rom_O2 = get_isotherm('Romulus', 'O2')
+# P_Rem_N2, q_Rem_N2 = get_isotherm('Remus', 'N2')
+# P_Rem_O2, q_Rem_O2 = get_isotherm('Remus', 'O2')
+
+# P_q_Rom_N2 = P_Rom_N2[1:] / q_Rom_N2[1:]
+# P_q_Rom_O2 = P_Rom_O2[1:] / q_Rom_O2[1:]
+# P_q_Rem_N2 = P_Rem_N2[1:] / q_Rem_N2[1:]
+# P_q_Rem_O2 = P_Rem_O2[1:] / q_Rem_O2[1:]
+
+# slope, intercept = np.polyfit(P_Rom_N2[1:], P_q_Rom_N2, 1)
+
+# qm = 1 / slope
+# KL = slope / intercept
+
+# print("Qm = ",qm)
+# print("KL = ",KL)
+
+# plt.figure(figsize = (8, 5))
+# plt.scatter(P_Rom_N2[1:], P_q_Rom_N2, label = 'Experimental Data')
+# plt.plot(P_Rom_N2[1:], slope * P_Rom_N2[1:] + intercept)
+
+# plt.xlabel('Pressure $P$ [Pa]')
+# plt.ylabel('$P / q$ [Pa kg mol$^{-1}$]')
+# plt.title('Langmuir Linearisation Plot - Romulus ${N_2}$')
+# plt.legend()
+# plt.grid(True, linestyle = '--', alpha = 0.5)
+# plt.savefig("chart.png")
+
+# R2 = np.corrcoef(P_Rom_N2[1:], P_q_Rom_N2)[0, 1]**2
+# print("R2 value = ",R2)
 
